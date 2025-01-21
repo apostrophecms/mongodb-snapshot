@@ -6,7 +6,7 @@ Because the format of mongodb archive files is a bit more complicated and appare
 
 ## Installation
 ```bash
-npm install @apostrophecms/db-snapshot
+npm install @apostrophecms/mongodb-snapshot
 ```
 
 ## Usage
@@ -17,7 +17,7 @@ npm install @apostrophecms/db-snapshot
 // writing
 
 const { MongoClient } = require('mongodb');
-const { write } = require('@apostrophecms/db-snapshot');
+const { write } = require('@apostrophecms/mongodb-snapshot');
 
 async function saveASnapshot() {
   const client = new MongoClient(yourMongodbUriGoesHere, { useUnifiedTopology: true });
@@ -30,7 +30,7 @@ async function saveASnapshot() {
 
 ```javascript
 const { MongoClient } = require('mongodb');
-const { erase, read } = require('@apostrophecms/db-snapshot');
+const { erase, read } = require('@apostrophecms/mongodb-snapshot');
 
 async function saveASnapshot() {
   const client = new MongoClient(yourMongodbUriGoesHere, { useUnifiedTopology: true });

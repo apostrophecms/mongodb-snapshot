@@ -1,6 +1,6 @@
 "use strict";
 
-const uri = 'mongodb://localhost:27017/db-snapshot-test-only';
+const uri = 'mongodb://localhost:27017/mongodb-snapshot-test-only';
 
 const { MongoClient } = require('mongodb');
 
@@ -11,7 +11,7 @@ const { read, write, erase } = require('../index.js');
 
 let client, db;
 
-describe('test db-snapshot', function() {
+describe('test mongodb-snapshot', function() {
   before(async function() {
     await connect();
     await erase(db);

@@ -8,14 +8,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/apostrophecms/db-snapshot.git"
+    "url": "git+https://github.com/apostrophecms/mongodb-snapshot.git"
   },
   "author": "Apostrophe Technologies",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/apostrophecms/db-snapshot/issues"
+    "url": "https://github.com/apostrophecms/mongodb-snapshot/issues"
   },
-  "homepage": "https://github.com/apostrophecms/db-snapshot#readme",
+  "homepage": "https://github.com/apostrophecms/mongodb-snapshot#readme",
   "dependencies": {
     "bson": "^6.10.1",
     "mongodb": "^6.12.0"
