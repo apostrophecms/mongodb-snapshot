@@ -27,19 +27,45 @@ describe('test mongodb-snapshot', function() {
     await docs.insertOne({
       tull: 'jethro'
     });
+    await docs.insertOne({
+      tull: 'unwanted'
+    });
     // Test whether indexes are included in shapshots
     await docs.createIndex({
       tull: 1
     }, {
       unique: true
     });
-    await write(db, `${__dirname}/test.snapshot`);
+    const cookies = db.collection('cookies');
+    await cookies.insertOne({
+      name: 'chocolate chip'
+    });
+    const colors = db.collection('colors');
+    await colors.insertOne({
+      name: 'blue'
+    });
+    await write(db, `${__dirname}/test.snapshot`, {
+      exclude: [ 'cookies' ],
+      filters: {
+        docs: {
+          tull: {
+            $ne: 'unwanted'
+          }
+        }
+      }
+    });
   });
   it('can read a snapshot', async function() {
     const docs = db.collection('docs');
     await docs.deleteMany({});
     await docs.dropIndexes();
-    await read(db, `${__dirname}/test.snapshot`);
+    const cookies = db.collection('cookies');
+    await cookies.deleteMany({});
+    await cookies.dropIndexes();
+    const colors = db.collection('colors');
+    await colors.deleteMany({});
+    await colors.dropIndexes();
+    await read(db, `${__dirname}/test.snapshot`, { exclude: [ 'colors' ]});
     const result = await docs.find({}).sort({ tull: 1 }).toArray();
     assert.strictEqual(result.length, 2);
     assert.strictEqual(result[0].tull, '35 cents please');
@@ -50,6 +76,12 @@ describe('test mongodb-snapshot', function() {
         tull: 'jethro'
       });
     });
+    // Verify exclude option of "write" works
+    const foundCookies = await cookies.find({}).toArray();
+    assert.strictEqual(foundCookies.length, 0);
+    // Verify exclude option of "read" works
+    const foundColors = await cookies.find({}).toArray();
+    assert.strictEqual(foundColors.length, 0);
   });
 });
 
