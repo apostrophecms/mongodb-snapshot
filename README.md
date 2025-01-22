@@ -23,6 +23,28 @@ mongodb-snapshot-write --from=mongodb://localhost:27017/mydbname --to=myfile.sna
 mongodb-snapshot-read --from=myfile.snapshot --to=mongodb://localhost:27017/mydbname --erase
 ```
 
+### Including and excluding collections
+
+With both commands, if you want to exclude certain certain collections, just add:
+
+```
+--exclude=name1,name2
+```
+
+### Filtering individual documents
+
+With the `mongodb-snapshot-write` command **only**, you can specify a MongoDB query to
+filter the documents for any collection. For example:
+
+```bash
+mongodb-snapshot-write --from=mongodb://localhost:27017/mydbname --to=myfile.snapshot --filter-COLLECTION-NAME-HERE='{"type":"interesting"}'
+```
+
+The query must be valid JSON. Watch out for shell escaping rules (note the single quotes in the example). Note that
+MongoDB has a `$regex` operator which can be useful here.
+
+You may specify filters for as many collections as you wish. Note that the parameter name begins with `--filter-` followed by the collection name.
+
 ## Node.js API usage
 
 ```javascript
@@ -38,7 +60,18 @@ async function saveASnapshot() {
   await client.connect();
   const db = await client.db();
   // Writes the contents of db to myfilename.snapshot, including indexes
-  await write(db, 'myfilename.snapshot');
+  // Two collections are excluded (optional third argument)
+  await write(db, 'myfilename.snapshot', {
+    // No password hashes please
+    exclude: [ 'aposUsersSafe' ],
+    filters: {
+      aposDocs: {
+        type: {
+          // No users please
+          $ne: '@apostrophecms/user'
+        }
+      }
+    }});
 }
 ```
 
@@ -53,13 +86,14 @@ async function saveASnapshot() {
   // If you want to replace the current contents and avoid unique key errors and/or duplicate
   // documents, call erase first
   await erase(db);
-  await read(db, 'myfilename.snapshot');
+  // Two collections are excluded (optional third argument)
+  await read(db, 'myfilename.snapshot', { exclude: [ 'coll3', 'coll4' ]});
 }
 ```
 
 ## Limitations
 
-Correctness comes before performance, for now. Sensible amounts of parallelism would help.
+Correctness comes before performance, for now. Sensible amounts of parallelism might help.
 
 ## Credits
 

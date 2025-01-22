@@ -17,6 +17,7 @@ const { existsSync } = require('fs');
     const client = new MongoClient(argv.to);
     await client.connect();
     const db = await client.db();
+    const exclude = argv.exclude && argv.exclude.split(',');
     if (!existsSync(argv.from)) {
       fail(`${from} does not exist`);
     }
@@ -25,7 +26,7 @@ const { existsSync } = require('fs');
     if (argv.erase) {
       await erase(db);
     }
-    await read(db, argv.from);
+    await read(db, argv.from, { exclude });
     await client.close();
   } catch (e) {
     fail(e);

@@ -7,7 +7,7 @@ const { createReadStream, createWriteStream } = require('fs');
 const assert = require('assert');
 
 module.exports = {
-  async read(db, filename) {
+  async read(db, filename, { exclude = null } = {}) {
     const input = createReadStream(filename);
     const rl = readline.createInterface({
       input,
@@ -17,6 +17,7 @@ module.exports = {
     let collectionName;
     let collection;
     let version;
+    let skipCollection;
 
     for await (const line of rl) {
       const data = EJSON.parse(line);
@@ -27,8 +28,12 @@ module.exports = {
         assert(version);
         collectionName = data.value;
         collection = db.collection(collectionName);
+        skipCollection = exclude && exclude.includes(collectionName);
       } else if (data.metaType === 'index') {
         assert(collection);
+        if (skipCollection) {
+          continue;
+        }
         const {
           key,
           v,
@@ -37,19 +42,26 @@ module.exports = {
         await collection.createIndex(key, rest);
       } else if (data.metaType === 'doc') {
         assert(collection);
+        if (skipCollection) {
+          continue;
+        }
         await collection.insertOne(data.value);
       }
     }
   },
-  async write(db, filename) {
+  async write(db, filename, { exclude = null, filters = {} } = {}) {
     const output = createWriteStream(filename);
     const collectionsInfo = await db.listCollections().toArray();
     const collectionNames = collectionsInfo.map(({ name }) => name);
     await write('version', 1);
     for (const name of collectionNames) {
+      if (exclude && exclude.includes(name)) {
+        continue;
+      }
       const collection = db.collection(name);
       await write('collection', name);
       const indexes = await collection.listIndexes().toArray();
+      const filter = Object.hasOwn(filters, name) ? filters[name] : {};
       for (const index of indexes) {
         await write('index', index);
       }
@@ -58,11 +70,13 @@ module.exports = {
       // in Apostrophe.
       const idsInfo = await collection.find({}, { _id: 1 }).toArray();
       const _ids = idsInfo.map(({ _id }) => _id);
-      // TODO: moderate parallelism would greatly improve performance. We can't assume
-      // that fetching hundreds of documents is RAM-safe, but we could be doing
-      // perhaps 5 in parallel. The end result still has to be written in order though
       for (const _id of _ids) {
-        const doc = await collection.findOne({ _id });
+        const doc = await collection.findOne({
+          _id,
+          $and: [
+            filter
+          ]
+        });
         if (doc) {
           await write('doc', doc);
         } else {
