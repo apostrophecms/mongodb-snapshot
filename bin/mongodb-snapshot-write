@@ -1,0 +1,29 @@
+#!/usr/bin/env node
+
+const { MongoClient } = require('mongodb');
+const { write } = require('../index.js');
+const argv = require('boring')();
+
+(async () => {
+  if (!(argv.from && argv.to)) {
+    fail(
+      'Usage: mongodb-snapshot-write --from=mongodb://localhost:27017/dbname --to=some-filename.snapshot\n\n' +
+      'This command will write a database snapshot to a file.'
+    );
+  }
+  try {
+    const client = new MongoClient(argv.from);
+    await client.connect();
+    const db = await client.db();
+    // If you want to replace the current contents and avoid unique key errors and/or duplicate
+    // documents, call erase first
+    await write(db, argv.to);
+  } catch (e) {
+    fail(e);
+  }
+})();
+
+function fail(e) {
+  console.error(e);
+  process.exit(1);
+}

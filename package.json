@@ -17,10 +17,15 @@
   },
   "homepage": "https://github.com/apostrophecms/mongodb-snapshot#readme",
   "dependencies": {
+    "boring": "^1.1.1",
     "bson": "^6.10.1",
     "mongodb": "^6.12.0"
   },
   "devDependencies": {
     "mocha": "^11.0.1"
+  },
+  "bin": {
+    "mongodb-snapshot-write": "./bin/mongodb-snapshot-write",
+    "mongodb-snapshot-read": "./bin/mongodb-snapshot-read"
   }
 }
