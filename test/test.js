@@ -54,7 +54,7 @@ describe('test mongodb-snapshot', function() {
 });
 
 async function connect() {
-  client = new MongoClient(uri, { useUnifiedTopology: true });
+  client = new MongoClient(uri);
   await client.connect();
   db = await client.db();
   return db;
