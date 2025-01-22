@@ -25,7 +25,6 @@ const argv = require('boring')();
         [ name.replace('filter-', ''), JSON.parse(value) ]
       )
     );
-    console.log(filters);
     await write(db, argv.to, { exclude, filters });
     await client.close();
   } catch (e) {
