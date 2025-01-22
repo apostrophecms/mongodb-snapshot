@@ -3,6 +3,7 @@
 const { MongoClient } = require('mongodb');
 const { erase, read } = require('../index.js');
 const argv = require('boring')();
+const { existsSync } = require('fs');
 
 (async () => {
   if (!(argv.from && argv.to)) {
@@ -16,7 +17,7 @@ const argv = require('boring')();
     const client = new MongoClient(argv.to);
     await client.connect();
     const db = await client.db();
-    if (!fs.existsSync(argv.from)) {
+    if (!existsSync(argv.from)) {
       fail(`${from} does not exist`);
     }
     // If you want to replace the current contents and avoid unique key errors and/or duplicate
@@ -25,6 +26,7 @@ const argv = require('boring')();
       await erase(db);
     }
     await read(db, argv.from);
+    await client.close();
   } catch (e) {
     fail(e);
   }

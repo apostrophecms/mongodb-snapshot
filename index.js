@@ -45,13 +45,13 @@ module.exports = {
     const output = createWriteStream(filename);
     const collectionsInfo = await db.listCollections().toArray();
     const collectionNames = collectionsInfo.map(({ name }) => name);
-    write('version', 1);
+    await write('version', 1);
     for (const name of collectionNames) {
       const collection = db.collection(name);
       await write('collection', name);
       const indexes = await collection.listIndexes().toArray();
       for (const index of indexes) {
-        write('index', index);
+        await write('index', index);
       }
       // Get all the _id properties in one go. In theory, we could run out of RAM
       // here, but that is very unlikely at a database size that would be encountered
@@ -64,7 +64,7 @@ module.exports = {
       for (const _id of _ids) {
         const doc = await collection.findOne({ _id });
         if (doc) {
-          write('doc', doc);
+          await write('doc', doc);
         } else {
           // This is not an error, documents do go away between operations sometimes
         }

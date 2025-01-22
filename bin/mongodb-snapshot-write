@@ -18,6 +18,7 @@ const argv = require('boring')();
     // If you want to replace the current contents and avoid unique key errors and/or duplicate
     // documents, call erase first
     await write(db, argv.to);
+    await client.close();
   } catch (e) {
     fail(e);
   }
