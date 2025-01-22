@@ -6,6 +6,8 @@ const { EJSON } = require('bson');
 const { createReadStream, createWriteStream } = require('fs');
 const assert = require('assert');
 
+const batchSize = 5;
+
 module.exports = {
   async read(db, filename) {
     const input = createReadStream(filename);
@@ -17,6 +19,7 @@ module.exports = {
     let collectionName;
     let collection;
     let version;
+    let pending = [];
 
     for await (const line of rl) {
       const data = EJSON.parse(line);
@@ -25,6 +28,9 @@ module.exports = {
         version = data.value;
       } else if (data.metaType === 'collection') {
         assert(version);
+        if (collection) {
+          await flush();
+        }
         collectionName = data.value;
         collection = db.collection(collectionName);
       } else if (data.metaType === 'index') {
@@ -37,7 +43,16 @@ module.exports = {
         await collection.createIndex(key, rest);
       } else if (data.metaType === 'doc') {
         assert(collection);
-        await collection.insertOne(data.value);
+        pending.push(data.value);
+        if (pending.length === batchSize) {
+          await flush();
+        }
+      }
+    }
+    async function flush() {
+      if (pending.length > 0) {
+        await collection.insertMany(pending);
+        pending = [];
       }
     }
   },
@@ -61,12 +76,10 @@ module.exports = {
       // TODO: moderate parallelism would greatly improve performance. We can't assume
       // that fetching hundreds of documents is RAM-safe, but we could be doing
       // perhaps 5 in parallel. The end result still has to be written in order though
-      for (const _id of _ids) {
-        const doc = await collection.findOne({ _id });
-        if (doc) {
+      for (let i = 0; (i < _ids.length); i += batchSize) {
+        const docs = await collection.find({ _id: { $in: _ids.slice(i, i + batchSize) } }).toArray();
+        for (const doc of docs) {
           await write('doc', doc);
-        } else {
-          // This is not an error, documents do go away between operations sometimes
         }
       }
     }
